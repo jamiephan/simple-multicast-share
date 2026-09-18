@@ -432,7 +432,7 @@ export default function App() {
         <span>Simple Multicast Share by Jamie Phan</span>
         <span className="footer-links">
           <a href="https://github.com/jamiephan/simple-multicast-share" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="https://github.com/jamiephan/simple-multicast-share/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+          <a href="https://github.com/jamiephan/simple-multicast-share/blob/master/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
         </span>
       </footer>
 
