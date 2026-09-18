@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bug, ChevronRight, CirclePlus, Download, FilePenLine, FilePlus2,
+  AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bug, ChevronDown, ChevronRight, CirclePlus, Download, FilePenLine, FilePlus2,
   Folder, FolderInput, FolderPlus, Grid2X2, HardDriveUpload, Home, List, Moon, MoreVertical,
   Move, Pencil, RefreshCw, Search, Sun, Trash2, Upload, X,
 } from 'lucide-react'
@@ -10,7 +10,7 @@ import { DatabaseInspector } from './components/DatabaseInspector'
 import { FileTypeIcon } from './components/FileTypeIcon'
 import { MoveDialog } from './components/MoveDialog'
 import { Preview } from './components/Preview'
-import { sortFileEntries, type SortDirection, type SortField } from './file-list'
+import { fileTypeLabel, sortFileEntries, type SortDirection, type SortField } from './file-list'
 import { formatBytes, joinPath, parentPath } from './path'
 import type { FileEntry, Theme, UploadProgress, ViewMode } from './types'
 
@@ -92,7 +92,7 @@ export default function App() {
         && 'direction' in saved.sort
       ) {
         const sort = saved.sort as { field?: unknown; direction?: unknown }
-        if (sort.field === 'name' || sort.field === 'size' || sort.field === 'modified') {
+        if (sort.field === 'name' || sort.field === 'type' || sort.field === 'size' || sort.field === 'modified') {
           setSortField(sort.field)
         }
         if (sort.direction === 'asc' || sort.direction === 'desc') {
@@ -353,18 +353,22 @@ export default function App() {
           </div>
           <div className="view-group">
             <label className="search"><Search size={17} /><span className="sr-only">Filter files</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter files…" />{query && <button aria-label="Clear filter" onClick={() => setQuery('')}><X size={15} /></button>}</label>
-            <label className="sort-select">
-              <span className="sr-only">Sort files by</span>
-              <ArrowUpDown size={16} />
-              <select value={sortField} onChange={(event) => setSort(event.target.value as SortField, 'asc')}>
-                <option value="name">Name</option>
-                <option value="size">Size</option>
-                <option value="modified">Modified</option>
-              </select>
-            </label>
-            <button className="icon-button sort-direction" title={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'}`} aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`} onClick={() => setSort(sortField, sortDirection === 'asc' ? 'desc' : 'asc')}>
-              {sortDirection === 'asc' ? <ArrowUp size={17} /> : <ArrowDown size={17} />}
-            </button>
+            {view === 'grid' && <>
+              <label className="sort-select">
+                <span className="sr-only">Sort files by</span>
+                <ArrowUpDown size={16} />
+                <select value={sortField} onChange={(event) => setSort(event.target.value as SortField, 'asc')}>
+                  <option value="name">Name</option>
+                  <option value="type">Type</option>
+                  <option value="size">Size</option>
+                  <option value="modified">Modified</option>
+                </select>
+                <ChevronDown className="sort-select-chevron" size={14} aria-hidden="true" />
+              </label>
+              <button className="icon-button sort-direction" title={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'}`} aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`} onClick={() => setSort(sortField, sortDirection === 'asc' ? 'desc' : 'asc')}>
+                {sortDirection === 'asc' ? <ArrowUp size={17} /> : <ArrowDown size={17} />}
+              </button>
+            </>}
             <button className="icon-button" aria-label="Refresh folder" onClick={() => void load()}><RefreshCw size={18} /></button>
             <div className="segmented" aria-label="View mode">
               <button aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setMode('grid')}><Grid2X2 size={17} /></button>
@@ -400,6 +404,7 @@ export default function App() {
               <div className="table-head" role="row">
                 {([
                   ['name', 'Name'],
+                  ['type', 'Type'],
                   ['size', 'Size'],
                   ['modified', 'Modified'],
                 ] as const).map(([field, label]) => (
@@ -414,6 +419,7 @@ export default function App() {
               </div>
               {sorted.map((entry) => <div className="table-row" role="row" key={entry.path} onDoubleClick={() => openEntry(entry)}>
                 <button role="cell" className="table-name" onClick={() => openEntry(entry)}><FileTypeIcon entry={entry} /><span title={entry.name}>{entry.name}</span></button>
+                <span role="cell">{fileTypeLabel(entry)}</span>
                 <span role="cell">{entry.kind === 'file' ? formatBytes(entry.size) : '—'}</span>
                 <span role="cell">{displayDate(entry.modified)}</span>
                 <span role="cell">{actionMenu(entry)}</span>

@@ -17,7 +17,7 @@ export type FileVisualType =
   | 'presentation'
   | 'file'
 
-export type SortField = 'name' | 'size' | 'modified'
+export type SortField = 'name' | 'type' | 'size' | 'modified'
 export type SortDirection = 'asc' | 'desc'
 
 const archiveExtensions = new Set(['zip', 'tar', 'gz', 'tgz', 'bz2', 'xz', '7z', 'rar'])
@@ -53,6 +53,26 @@ export function fileVisualType(entry: FileEntry): FileVisualType {
   return 'file'
 }
 
+const fileTypeLabels: Record<FileVisualType, string> = {
+  folder: 'Folder',
+  image: 'Image',
+  audio: 'Audio',
+  video: 'Video',
+  pdf: 'PDF',
+  archive: 'Archive',
+  code: 'Source code',
+  text: 'Text',
+  model: '3D model',
+  word: 'Word document',
+  spreadsheet: 'Spreadsheet',
+  presentation: 'Presentation',
+  file: 'File',
+}
+
+export function fileTypeLabel(entry: FileEntry) {
+  return fileTypeLabels[fileVisualType(entry)]
+}
+
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
 export function sortFileEntries(
@@ -67,6 +87,7 @@ export function sortFileEntries(
 
     let compared = 0
     if (field === 'name') compared = collator.compare(left.name, right.name)
+    else if (field === 'type') compared = collator.compare(fileTypeLabel(left), fileTypeLabel(right))
     else if (field === 'size') compared = (left.size ?? 0) - (right.size ?? 0)
     else compared = Date.parse(left.modified) - Date.parse(right.modified)
     if (!Number.isFinite(compared)) compared = 0

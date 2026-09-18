@@ -33,6 +33,27 @@ network.
 - **No setup:** mDNS is enabled by default, so there is no server configuration or IP address to remember.
 - **Local-first:** share through a browser on your trusted home, studio, or office network.
 
+## Screenshots
+
+<table>
+  <tr>
+    <th>File browser</th>
+    <th>File preview (code files)</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/file-list.png" alt="Dark-mode file list showing semantic file types and sorting controls"></td>
+    <td><img src="docs/screenshots/code-preview.png" alt="Code file preview"></td>
+  </tr>
+  <tr>
+    <th>File preview (3D models)</th>
+    <th>Debug Database inspector (saved file data)</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/model-preview.png" alt="Interactive STL model preview"></td>
+    <td><img src="docs/screenshots/database-inspector.png" alt="SQLite database inspector with storage statistics and compaction controls"></td>
+  </tr>
+</table>
+
 ## Quick start
 
 1. Download the binary for your operating system.
@@ -62,7 +83,7 @@ address instead. No application configuration is required.
 - Upload by picker or drag-and-drop, replace, rename, move, download, and recursively delete
 - Browse for a move destination, including nested folders, parents, and the root
 - Create folders and organize shared files
-- Distinct icons by file type and ascending/descending sorting by name, size, or modified time
+- Distinct icons and a file-type column, with sortable list headers and grid-view sort controls for name, type, size, and modified time
 - Full-window drag-and-drop upload target for the currently open folder
 - Grid/list views and system/light/dark themes persisted in SQLite
 - Browser previews for images, PDF, audio, video, and STL/OBJ/FBX/glTF/GLB 3D models

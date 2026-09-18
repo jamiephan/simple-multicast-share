@@ -127,8 +127,11 @@ main { max-width: 1368px; margin: 0 auto; padding: 22px 24px 70px; }
 .search:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent); }
 .search input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 13px; }
 .search button { width: 22px; height: 22px; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
-.sort-select { height: 38px; display: flex; align-items: center; gap: 5px; padding: 0 6px 0 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); }
-.sort-select select { max-width: 92px; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 12px; cursor: pointer; }
+.sort-select { height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); transition: border-color .15s, box-shadow .15s; cursor: pointer; }
+.sort-select:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent); }
+.sort-select select { min-width: 68px; border: 0; outline: 0; appearance: none; background: transparent; color: var(--text); font: 500 12px/1 inherit; cursor: pointer; }
+.sort-select select option { background: var(--surface-raised); color: var(--text); }
+.sort-select-chevron { flex: 0 0 auto; color: var(--muted); pointer-events: none; }
 .sort-direction { border: 1px solid var(--border); background: var(--surface); }
 .segmented { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .segmented button { width: 36px; height: 36px; display: grid; place-items: center; background: transparent; border: 0; cursor: pointer; color: var(--muted); }
@@ -174,7 +177,7 @@ main { max-width: 1368px; margin: 0 auto; padding: 22px 24px 70px; }
 .context-menu .menu-danger { color: var(--danger); }
 
 .file-table { border: 1px solid var(--border); border-radius: 11px; background: var(--surface); overflow: visible; }
-.table-head, .table-row { display: grid; grid-template-columns: minmax(220px, 1fr) 110px 190px 45px; align-items: center; min-height: 48px; border-bottom: 1px solid var(--border); }
+.table-head, .table-row { display: grid; grid-template-columns: minmax(220px, 1fr) 130px 100px 190px 45px; align-items: center; min-height: 48px; border-bottom: 1px solid var(--border); }
 .table-head { min-height: 40px; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .table-head > span, .table-row > span { padding: 0 14px; }
 .table-head > span { align-self: stretch; display: flex; align-items: center; }
@@ -303,8 +306,9 @@ dialog::backdrop { background: rgb(13 17 28 / 55%); backdrop-filter: blur(3px); 
   .file-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 9px; }
   .file-card { height: 150px; }
   .card-open .entry-icon { width: 48px; height: 48px; margin-bottom: 14px; }
-  .table-head, .table-row { grid-template-columns: minmax(180px, 1fr) 80px 42px; }
-  .table-head > span:nth-child(3), .table-row > span:nth-child(3) { display: none; }
+  .table-head, .table-row { grid-template-columns: minmax(150px, 1fr) 110px 42px; }
+  .table-head > span:nth-child(3), .table-row > span:nth-child(3),
+  .table-head > span:nth-child(4), .table-row > span:nth-child(4) { display: none; }
   .modal-body { padding: 14px; }
   .preview { min-height: 60vh; }
 }
