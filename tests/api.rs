@@ -104,6 +104,19 @@ async fn file_browser_crud_text_and_ranges() {
     let response = application
         .clone()
         .oneshot(
+            Request::get(format!(
+                "/api/files/{file_id}/content?disposition=inline&mime=application%2Fpdf"
+            ))
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "application/pdf");
+
+    let response = application
+        .clone()
+        .oneshot(
             Request::put(format!("/api/files/{file_id}/text"))
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(

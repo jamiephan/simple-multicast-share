@@ -8,7 +8,7 @@ use axum::{
     body::Body,
     extract::{Path, Query, State},
     http::{
-        header::{self, HeaderMap},
+        header::{self, HeaderMap, HeaderValue},
         Method, Response, StatusCode,
     },
     Json,
@@ -192,6 +192,7 @@ pub struct ReplaceQuery {
 #[derive(Default, Deserialize)]
 pub struct DownloadQuery {
     disposition: Option<String>,
+    mime: Option<String>,
 }
 
 pub async fn create_file(
@@ -357,6 +358,13 @@ pub async fn download_file(
         None => (0, item.size.saturating_sub(1) as u64, false),
     };
     let response_length = if item.size == 0 { 0 } else { end - start + 1 };
+    let content_type = query
+        .mime
+        .as_deref()
+        .or(item.mime.as_deref())
+        .unwrap_or("application/octet-stream");
+    let content_type = HeaderValue::from_str(content_type)
+        .map_err(|_| ApiError::BadRequest("invalid preview MIME type".into()))?;
     let mut builder = Response::builder()
         .status(if partial {
             StatusCode::PARTIAL_CONTENT
@@ -365,10 +373,7 @@ pub async fn download_file(
         })
         .header(header::ACCEPT_RANGES, "bytes")
         .header(header::CONTENT_LENGTH, response_length)
-        .header(
-            header::CONTENT_TYPE,
-            item.mime.as_deref().unwrap_or("application/octet-stream"),
-        )
+        .header(header::CONTENT_TYPE, content_type)
         .header(
             header::CONTENT_DISPOSITION,
             format!(
@@ -583,9 +588,15 @@ pub async fn save_as(
     Ok((StatusCode::CREATED, Json(value)))
 }
 
+#[derive(Default, Deserialize)]
+pub struct ArchiveQuery {
+    format: Option<String>,
+}
+
 pub async fn list_archive(
     State(state): State<AppState>,
     Path(id): Path<i64>,
+    Query(query): Query<ArchiveQuery>,
 ) -> ApiResult<Json<archive::ArchiveListing>> {
     let connection = db::connect(&state.db_path)?;
     let item = db::require_file(&connection, id)?;
@@ -598,7 +609,11 @@ pub async fn list_archive(
         connection.query_row("SELECT content FROM items WHERE id = ?1", [id], |row| {
             row.get(0)
         })?;
-    let listing = tokio::task::spawn_blocking(move || archive::list(&item.name, bytes))
+    let name = query
+        .format
+        .map(|format| format!("preview.{format}"))
+        .unwrap_or(item.name);
+    let listing = tokio::task::spawn_blocking(move || archive::list(&name, bytes))
         .await
         .map_err(|error| ApiError::Internal(error.to_string()))??;
     Ok(Json(listing))

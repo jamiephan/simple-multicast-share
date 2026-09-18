@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, ArrowDownAZ, Bug, ChevronRight, CirclePlus, Download, File, FilePenLine, FilePlus2,
+  AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bug, ChevronRight, CirclePlus, Download, FilePenLine, FilePlus2,
   Folder, FolderInput, FolderPlus, Grid2X2, HardDriveUpload, Home, List, Moon, MoreVertical,
   Move, Pencil, RefreshCw, Search, Sun, Trash2, Upload, X,
 } from 'lucide-react'
@@ -7,8 +7,10 @@ import { type ChangeEvent, type DragEvent, useCallback, useEffect, useMemo, useR
 import { ApiError, api, uploadFile } from './api'
 import { ConfirmDialog, Modal, PromptDialog } from './components/Modal'
 import { DatabaseInspector } from './components/DatabaseInspector'
+import { FileTypeIcon } from './components/FileTypeIcon'
 import { MoveDialog } from './components/MoveDialog'
 import { Preview } from './components/Preview'
+import { sortFileEntries, type SortDirection, type SortField } from './file-list'
 import { formatBytes, joinPath, parentPath } from './path'
 import type { FileEntry, Theme, UploadProgress, ViewMode } from './types'
 
@@ -24,10 +26,6 @@ function displayDate(value: string) {
   return Number.isNaN(date.valueOf()) ? 'Unknown' : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function fileIcon(entry: FileEntry) {
-  return entry.kind === 'directory' ? <Folder className="entry-icon folder" /> : <File className="entry-icon file" />
-}
-
 export default function App() {
   const [path, setPath] = useState(() => new URLSearchParams(location.search).get('path') ?? '')
   const [entries, setEntries] = useState<FileEntry[]>([])
@@ -36,6 +34,8 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [query, setQuery] = useState('')
   const [view, setView] = useState<ViewMode>(() => localStorage.getItem('view') === 'list' ? 'list' : 'grid')
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [theme, setTheme] = useState<Theme>('system')
   const [prompt, setPrompt] = useState<PromptState>(null)
   const [deleting, setDeleting] = useState<FileEntry | null>(null)
@@ -51,6 +51,7 @@ export default function App() {
   const replaceInput = useRef<HTMLInputElement>(null)
   const replacing = useRef<FileEntry | null>(null)
   const uploadSequence = useRef(0)
+  const dragDepth = useRef(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -84,6 +85,20 @@ export default function App() {
       if (saved.view === 'grid' || saved.view === 'list') {
         setView(saved.view)
       }
+      if (
+        typeof saved.sort === 'object'
+        && saved.sort !== null
+        && 'field' in saved.sort
+        && 'direction' in saved.sort
+      ) {
+        const sort = saved.sort as { field?: unknown; direction?: unknown }
+        if (sort.field === 'name' || sort.field === 'size' || sort.field === 'modified') {
+          setSortField(sort.field)
+        }
+        if (sort.direction === 'asc' || sort.direction === 'desc') {
+          setSortDirection(sort.direction)
+        }
+      }
     }).catch(() => {
       const saved = localStorage.getItem('theme') as Theme | null
       if (saved) setTheme(saved)
@@ -116,10 +131,28 @@ export default function App() {
     }
   }
 
-  const sorted = useMemo(() => entries
-    .filter((entry) => entry.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
-    .sort((a, b) => Number(b.kind === 'directory') - Number(a.kind === 'directory') || a.name.localeCompare(b.name, undefined, { numeric: true })),
-  [entries, query])
+  const changeSort = (field: SortField) => {
+    const direction: SortDirection = field === sortField
+      ? sortDirection === 'asc' ? 'desc' : 'asc'
+      : 'asc'
+    setSortField(field)
+    setSortDirection(direction)
+    void api.saveSort(field, direction).catch((caught) => {
+      setError(`Sort changed locally, but the server preference was not saved: ${caught instanceof Error ? caught.message : 'Unknown error'}`)
+    })
+  }
+  const setSort = (field: SortField, direction: SortDirection) => {
+    setSortField(field)
+    setSortDirection(direction)
+    void api.saveSort(field, direction).catch((caught) => {
+      setError(`Sort changed locally, but the server preference was not saved: ${caught instanceof Error ? caught.message : 'Unknown error'}`)
+    })
+  }
+  const sorted = useMemo(() => sortFileEntries(
+    entries.filter((entry) => entry.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())),
+    sortField,
+    sortDirection,
+  ), [entries, query, sortDirection, sortField])
   const crumbs = useMemo(() => path.split('/').filter(Boolean), [path])
   const darkTheme = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
 
@@ -212,6 +245,9 @@ export default function App() {
     for (const file of Array.from(files)) void uploadOne(file)
   }
 
+  const dragContainsFiles = (event: DragEvent) =>
+    Array.from(event.dataTransfer.types).includes('Files')
+
   const replace = (entry: FileEntry) => {
     replacing.current = entry
     replaceInput.current?.click()
@@ -265,7 +301,32 @@ export default function App() {
   )
 
   return (
-    <div className="app" onClick={() => menu && setMenu(null)}>
+    <div
+      className="app"
+      onClick={() => menu && setMenu(null)}
+      onDragEnter={(event) => {
+        if (!dragContainsFiles(event)) return
+        event.preventDefault()
+        dragDepth.current += 1
+        setDragging(true)
+      }}
+      onDragOver={(event) => {
+        if (dragContainsFiles(event)) event.preventDefault()
+      }}
+      onDragLeave={(event) => {
+        if (!dragContainsFiles(event)) return
+        dragDepth.current = Math.max(0, dragDepth.current - 1)
+        if (dragDepth.current === 0) setDragging(false)
+      }}
+      onDrop={(event: DragEvent) => {
+        if (!dragContainsFiles(event)) return
+        event.preventDefault()
+        dragDepth.current = 0
+        setDragging(false)
+        uploadFiles(event.dataTransfer.files)
+      }}
+    >
+      {dragging && <div className="drop-overlay"><Upload size={48} /><strong>Drop files to upload</strong><span>Files will be uploaded into {path || 'the root folder'}</span></div>}
       <header className="topbar">
         <div className="brand"><div className="brand-mark"><FolderInput /></div><div><strong>Simple Share</strong><span>Files available on this device</span></div></div>
         <div className="top-actions">
@@ -292,6 +353,18 @@ export default function App() {
           </div>
           <div className="view-group">
             <label className="search"><Search size={17} /><span className="sr-only">Filter files</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter files…" />{query && <button aria-label="Clear filter" onClick={() => setQuery('')}><X size={15} /></button>}</label>
+            <label className="sort-select">
+              <span className="sr-only">Sort files by</span>
+              <ArrowUpDown size={16} />
+              <select value={sortField} onChange={(event) => setSort(event.target.value as SortField, 'asc')}>
+                <option value="name">Name</option>
+                <option value="size">Size</option>
+                <option value="modified">Modified</option>
+              </select>
+            </label>
+            <button className="icon-button sort-direction" title={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'}`} aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`} onClick={() => setSort(sortField, sortDirection === 'asc' ? 'desc' : 'asc')}>
+              {sortDirection === 'asc' ? <ArrowUp size={17} /> : <ArrowDown size={17} />}
+            </button>
             <button className="icon-button" aria-label="Refresh folder" onClick={() => void load()}><RefreshCw size={18} /></button>
             <div className="segmented" aria-label="View mode">
               <button aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setMode('grid')}><Grid2X2 size={17} /></button>
@@ -303,14 +376,7 @@ export default function App() {
         {error && <div className="alert error" role="alert"><AlertTriangle size={18} /><span>{error}</span><button aria-label="Dismiss error" onClick={() => setError('')}><X size={17} /></button></div>}
         {notice && <div className="toast" role="status">{notice}</div>}
 
-        <section
-          className={`drop-zone ${dragging ? 'dragging' : ''}`}
-          onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false) }}
-          onDrop={(event: DragEvent) => { event.preventDefault(); setDragging(false); uploadFiles(event.dataTransfer.files) }}
-        >
-          {dragging && <div className="drop-overlay"><Upload size={42} /><strong>Drop files to upload</strong><span>Files are uploaded into {path || 'the root folder'}</span></div>}
+        <section className="drop-zone">
           {loading ? <div className="empty-state"><div className="spinner" />Loading files…</div> :
             sorted.length === 0 ? <div className="empty-state">
               <Folder size={48} />
@@ -324,16 +390,30 @@ export default function App() {
               }}>
                 {actionMenu(entry)}
                 <button className="card-open" onClick={() => openEntry(entry)}>
-                  {fileIcon(entry)}
+                  <FileTypeIcon entry={entry} />
                   <span className="entry-name" title={entry.name}>{entry.name}</span>
                   <span className="entry-meta">{entry.kind === 'directory' ? 'Folder' : formatBytes(entry.size)}</span>
                 </button>
               </article>)}
             </div> :
             <div className="file-table" role="table" aria-label="Files">
-              <div className="table-head" role="row"><span role="columnheader"><ArrowDownAZ size={15} />Name</span><span role="columnheader">Size</span><span role="columnheader">Modified</span><span role="columnheader"><span className="sr-only">Actions</span></span></div>
+              <div className="table-head" role="row">
+                {([
+                  ['name', 'Name'],
+                  ['size', 'Size'],
+                  ['modified', 'Modified'],
+                ] as const).map(([field, label]) => (
+                  <span role="columnheader" aria-sort={sortField === field ? sortDirection === 'asc' ? 'ascending' : 'descending' : 'none'} key={field}>
+                    <button className={sortField === field ? 'active' : ''} onClick={() => changeSort(field)}>
+                      {label}
+                      {sortField === field ? sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} /> : <ArrowUpDown size={13} />}
+                    </button>
+                  </span>
+                ))}
+                <span role="columnheader"><span className="sr-only">Actions</span></span>
+              </div>
               {sorted.map((entry) => <div className="table-row" role="row" key={entry.path} onDoubleClick={() => openEntry(entry)}>
-                <button role="cell" className="table-name" onClick={() => openEntry(entry)}>{fileIcon(entry)}<span title={entry.name}>{entry.name}</span></button>
+                <button role="cell" className="table-name" onClick={() => openEntry(entry)}><FileTypeIcon entry={entry} /><span title={entry.name}>{entry.name}</span></button>
                 <span role="cell">{entry.kind === 'file' ? formatBytes(entry.size) : '—'}</span>
                 <span role="cell">{displayDate(entry.modified)}</span>
                 <span role="cell">{actionMenu(entry)}</span>

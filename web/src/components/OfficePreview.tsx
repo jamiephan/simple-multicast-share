@@ -12,6 +12,7 @@ const MAX_SHEET_COLUMNS = 100
 interface OfficePreviewProps {
   entry: FileEntry
   extension: string
+  onError?: (message: string) => void
 }
 
 interface SheetPreview {
@@ -20,7 +21,7 @@ interface SheetPreview {
   truncated: boolean
 }
 
-export function OfficePreview({ entry, extension }: OfficePreviewProps) {
+export function OfficePreview({ entry, extension, onError }: OfficePreviewProps) {
   const host = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,7 +51,7 @@ export function OfficePreview({ entry, extension }: OfficePreviewProps) {
         throw new Error(`Office preview is limited to ${formatBytes(MAX_OFFICE_PREVIEW_BYTES)}.`)
       }
       if (extension !== 'xls') {
-        await api.archive(entry.id, controller.signal)
+        await api.archive(entry.id, controller.signal, extension)
       }
       const response = await fetch(api.previewUrl(entry.id), { signal: controller.signal })
       if (!response.ok) throw new Error(`Could not load document (${response.status}).`)
@@ -112,7 +113,9 @@ export function OfficePreview({ entry, extension }: OfficePreviewProps) {
 
     load().catch((caught: unknown) => {
       if (!(caught instanceof DOMException && caught.name === 'AbortError') && !destroyed) {
-        setError(caught instanceof Error ? caught.message : 'Could not preview Office document')
+        const message = caught instanceof Error ? caught.message : 'Could not preview Office document'
+        setError(message)
+        onError?.(message)
         setLoading(false)
       }
     })
@@ -123,7 +126,7 @@ export function OfficePreview({ entry, extension }: OfficePreviewProps) {
       destroyPresentation?.()
       container?.replaceChildren()
     }
-  }, [entry.id, entry.size, extension, kind])
+  }, [entry.id, entry.size, extension, kind, onError])
 
   const sheet = sheets[activeSheet]
   return (

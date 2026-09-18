@@ -62,6 +62,8 @@ address instead. No application configuration is required.
 - Upload by picker or drag-and-drop, replace, rename, move, download, and recursively delete
 - Browse for a move destination, including nested folders, parents, and the root
 - Create folders and organize shared files
+- Distinct icons by file type and ascending/descending sorting by name, size, or modified time
+- Full-window drag-and-drop upload target for the currently open folder
 - Grid/list views and system/light/dark themes persisted in SQLite
 - Browser previews for images, PDF, audio, video, and STL/OBJ/FBX/glTF/GLB 3D models
 - Local Office previews for DOCX/DOCM, XLSX/XLSM/XLSB/XLS/ODS, and PPTX/PPTM/PPSX/PPSM/POTX/POTM
@@ -84,6 +86,11 @@ Spreadsheet previews cap rendered DOM output at 500 rows by 100 columns per shee
 to keep the interface responsive while preserving the original file in storage.
 Modern zipped Office files also pass the server's archive entry, expanded-size,
 and compression-ratio guards before rendering.
+
+For files whose extension and MIME type are unknown, the preview dialog provides
+an **Open as** selector for every supported text, image, media, PDF, archive, 3D,
+and Office parser. This does not rename or modify the file. Incompatible content
+produces an explicit error dialog and lets the user choose another preview type.
 
 ## Build
 

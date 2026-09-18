@@ -14,6 +14,7 @@ import type { FileEntry } from '../types'
 interface ModelPreviewProps {
   entry: FileEntry
   extension: string
+  onError?: (message: string) => void
 }
 
 function disposeObject(object: THREE.Object3D) {
@@ -30,7 +31,7 @@ function disposeObject(object: THREE.Object3D) {
   })
 }
 
-export function ModelPreview({ entry, extension }: ModelPreviewProps) {
+export function ModelPreview({ entry, extension, onError }: ModelPreviewProps) {
   const host = useRef<HTMLDivElement>(null)
   const resetView = useRef<() => void>(() => undefined)
   const model = useRef<THREE.Object3D | null>(null)
@@ -174,7 +175,9 @@ export function ModelPreview({ entry, extension }: ModelPreviewProps) {
     }
     load().catch((caught: unknown) => {
       if (!(caught instanceof DOMException && caught.name === 'AbortError')) {
-        setError(caught instanceof Error ? caught.message : 'Could not load 3D model')
+        const message = caught instanceof Error ? caught.message : 'Could not load 3D model'
+        setError(message)
+        onError?.(message)
         setLoading(false)
       }
     })
@@ -194,7 +197,7 @@ export function ModelPreview({ entry, extension }: ModelPreviewProps) {
       renderer.dispose()
       renderer.domElement.remove()
     }
-  }, [entry.id, entry.path, extension])
+  }, [entry.id, entry.path, extension, onError])
 
   useEffect(() => {
     model.current?.traverse((child) => {

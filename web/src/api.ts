@@ -1,4 +1,5 @@
 import type { DirectoryListing, FileEntry, Theme, ViewMode } from './types'
+import type { SortDirection, SortField } from './file-list'
 
 export class ApiError extends Error {
   status: number
@@ -227,12 +228,22 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(view),
     }),
-  previewUrl: (id: number) => `/api/files/${id}/content?disposition=inline`,
+  saveSort: (field: SortField, direction: SortDirection) =>
+    request<{ field: SortField; direction: SortDirection }>('/api/preferences/sort', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field, direction }),
+    }),
+  previewUrl: (id: number, mime?: string) =>
+    `/api/files/${id}/content?${new URLSearchParams({
+      disposition: 'inline',
+      ...(mime ? { mime } : {}),
+    })}`,
   downloadUrl: (id: number) => `/api/files/${id}/content`,
-  archive: async (id: number, signal?: AbortSignal) => {
+  archive: async (id: number, signal?: AbortSignal, format?: string) => {
     const result = await request<{
       entries: { path: string; size: number; kind: 'file' | 'folder' }[]
-    }>(`/api/files/${id}/archive`, { signal })
+    }>(`/api/files/${id}/archive${format ? `?${new URLSearchParams({ format })}` : ''}`, { signal })
     return {
       entries: result.entries.map((entry) => ({
         ...entry,

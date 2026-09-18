@@ -17,12 +17,12 @@ Conflicting names and stale revisions return `409 Conflict`.
 | `POST` | `/api/folders` | Create with `{ "parent_id", "name" }` |
 | `POST` | `/api/files?parent_id=1&name=x` | Stream a raw file body into SQLite |
 | `GET/HEAD` | `/api/files/{id}/content` | Range-capable attachment response |
-| `GET` | `/api/files/{id}/content?disposition=inline` | Range-capable browser preview |
+| `GET` | `/api/files/{id}/content?disposition=inline&mime=…` | Range-capable browser preview with optional temporary MIME override |
 | `PUT` | `/api/files/{id}/content?expected_revision=n` | Stream replacement content |
 | `GET` | `/api/files/{id}/text` | Read UTF-8 text and its revision |
 | `PUT` | `/api/files/{id}/text` | Save `{ "content", "expected_revision" }` |
 | `POST` | `/api/files/{id}/save-as` | Save edited text under a new name |
-| `GET` | `/api/files/{id}/archive` | Guarded ZIP/TAR/TAR.GZ/GZ listing |
+| `GET` | `/api/files/{id}/archive?format=…` | Guarded ZIP/TAR/TAR.GZ/GZ listing with optional parser-format override |
 | `GET` | `/api/preferences` | Read all JSON preference values |
 | `PUT/DELETE` | `/api/preferences/{key}` | Set or remove one JSON value |
 | `GET` | `/api/debug/database` | List application tables and column schemas |
