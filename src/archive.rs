@@ -25,6 +25,8 @@ pub struct ArchiveEntry {
     pub size: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compressed_size: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modified: Option<String>,
 }
 
 pub fn list(name: &str, bytes: Vec<u8>) -> ApiResult<ArchiveListing> {
@@ -77,11 +79,23 @@ fn list_zip(bytes: Vec<u8>) -> ApiResult<ArchiveListing> {
             .by_index(index)
             .map_err(|error| ApiError::BadRequest(format!("invalid ZIP entry: {error}")))?;
         guard_entry(entry.size(), &mut total)?;
+        let modified = entry.last_modified().filter(|value| value.is_valid());
         entries.push(ArchiveEntry {
             path: entry.name().chars().take(4096).collect(),
             kind: if entry.is_dir() { "folder" } else { "file" },
             size: entry.size(),
             compressed_size: Some(entry.compressed_size()),
+            modified: modified.map(|value| {
+                format!(
+                    "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+                    value.year(),
+                    value.month(),
+                    value.day(),
+                    value.hour(),
+                    value.minute(),
+                    value.second()
+                )
+            }),
         });
     }
     guard_ratio(total, compressed_len)?;
@@ -129,6 +143,7 @@ fn list_tar<R: Read>(
             },
             size,
             compressed_size: None,
+            modified: None,
         });
     }
     if let Some(compressed_len) = compressed_len {
@@ -166,6 +181,7 @@ fn list_gzip(name: &str, bytes: Vec<u8>) -> ApiResult<ArchiveListing> {
             kind: "file",
             size,
             compressed_size: Some(compressed_len),
+            modified: None,
         }],
     })
 }
@@ -198,9 +214,10 @@ fn guard_ratio(uncompressed: u64, compressed: u64) -> ApiResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
+    use std::io::{Cursor, Write};
 
     use flate2::{write::GzEncoder, Compression};
+    use zip::{write::SimpleFileOptions, DateTime, ZipWriter};
 
     use super::list;
 
@@ -214,6 +231,19 @@ mod tests {
         assert_eq!(listing.format, "gz");
         assert_eq!(listing.total_uncompressed_size, 13);
         assert_eq!(listing.entries[0].path, "note.txt");
+    }
+
+    #[test]
+    fn lists_a_zip_entry_modified_time() {
+        let mut archive = ZipWriter::new(Cursor::new(Vec::new()));
+        let modified = DateTime::from_date_and_time(2026, 9, 19, 14, 30, 12).unwrap();
+        let options = SimpleFileOptions::default().last_modified_time(modified);
+        archive.start_file("notes/readme.md", options).unwrap();
+        archive.write_all(b"hello archive").unwrap();
+        let bytes = archive.finish().unwrap().into_inner();
+
+        let listing = list("notes.zip", bytes).unwrap();
+        assert_eq!(listing.entries[0].modified.as_deref(), Some("2026-09-19T14:30:12"));
     }
 
     #[test]

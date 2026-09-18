@@ -242,7 +242,7 @@ export const api = {
   downloadUrl: (id: number) => `/api/files/${id}/content`,
   archive: async (id: number, signal?: AbortSignal, format?: string) => {
     const result = await request<{
-      entries: { path: string; size: number; kind: 'file' | 'folder' }[]
+      entries: { path: string; size: number; kind: 'file' | 'folder'; modified?: string }[]
     }>(`/api/files/${id}/archive${format ? `?${new URLSearchParams({ format })}` : ''}`, { signal })
     return {
       entries: result.entries.map((entry) => ({

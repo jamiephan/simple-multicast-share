@@ -201,6 +201,8 @@ Pushing a tag such as `v0.1.0` builds and publishes the standalone binary direct
 for Windows x86-64, Linux x86-64, and macOS ARM64 with generated GitHub release
 notes.
 
-## License
+---
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[Simple Multicast Share on GitHub](https://github.com/jamiephan/simple-multicast-share)
+
+Author: [Jamie Phan](https://github.com/jamiephan)

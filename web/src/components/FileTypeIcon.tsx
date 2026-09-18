@@ -2,10 +2,9 @@ import {
   Box, File, FileArchive, FileAudio, FileCode2, FileImage, FileSpreadsheet,
   FileText, FileVideo, Folder, Presentation,
 } from 'lucide-react'
-import { fileVisualType } from '../file-list'
-import type { FileEntry } from '../types'
+import { fileVisualType, type FileVisualEntry } from '../file-list'
 
-export function FileTypeIcon({ entry }: { entry: FileEntry }) {
+export function FileTypeIcon({ entry }: { entry: FileVisualEntry }) {
   const type = fileVisualType(entry)
   const className = `entry-icon ${type}`
   switch (type) {

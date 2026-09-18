@@ -6,6 +6,7 @@ import { officeKind } from '../office'
 import { formatBytes, joinPath, parentPath } from '../path'
 import { previewType, previewTypes, type PreviewCategory } from '../preview-types'
 import type { FileEntry } from '../types'
+import { FileTypeIcon } from './FileTypeIcon'
 import { ImageEditor } from './ImageEditor'
 import { Modal, PromptDialog } from './Modal'
 
@@ -17,6 +18,12 @@ const ext = (name: string) => name.split('.').pop()?.toLowerCase() ?? ''
 const imageExt = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'avif'])
 const textExt = new Set(['txt', 'md', 'markdown', 'json', 'toml', 'yaml', 'yml', 'csv', 'log', 'xml', 'html', 'htm', 'css', 'js', 'jsx', 'ts', 'tsx', 'rs', 'go', 'py', 'sh', 'bash', 'zsh', 'sql'])
 const archiveExt = new Set(['zip', 'tar', 'gz', 'tgz', 'bz2', 'xz', '7z', 'rar'])
+
+function displayArchiveDate(value?: string) {
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isNaN(date.valueOf()) ? '' : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
 
 interface PreviewProps {
   entry: FileEntry
@@ -49,7 +56,7 @@ export function Preview({ entry, dark, onClose, onChanged, onSaveImage }: Previe
   const isForced = Boolean(selectedType)
   const [editingImage, setEditingImage] = useState(false)
   const [text, setText] = useState('')
-  const [archive, setArchive] = useState<{ path: string; size: number; kind: 'file' | 'directory' }[]>([])
+  const [archive, setArchive] = useState<{ path: string; size: number; kind: 'file' | 'directory'; modified?: string }[]>([])
   const [loading, setLoading] = useState(category === 'text' || category === 'archive')
   const [saving, setSaving] = useState(false)
   const [saveChoice, setSaveChoice] = useState<'choice' | 'save-as' | null>(null)
@@ -130,9 +137,30 @@ export function Preview({ entry, dark, onClose, onChanged, onSaveImage }: Previe
       case 'pdf': return <iframe className="pdf-preview" src={url} title={`Preview of ${entry.name}`} />
       case 'text': return <Suspense fallback={<div className="empty-state"><div className="spinner" />Preparing editor…</div>}><CodeEditor filename={entry.name} value={text} dark={dark} onChange={setText} /></Suspense>
       case 'archive': return (
-        <div className="archive-list">
-          <div className="archive-heading"><Archive size={18} /> {archive.length} archive entries</div>
-          {archive.map((item, index) => <div className="archive-row" key={`${item.path}-${index}`}><span>{item.path}{item.kind === 'directory' ? '/' : ''}</span><span>{item.kind === 'file' ? formatBytes(item.size) : ''}</span></div>)}
+        <div className="archive-list" role="table" aria-label="Archive contents">
+          <div className="archive-header">
+            <div className="archive-summary"><Archive size={18} /><span>{archive.length} archive entries</span></div>
+            <div className="archive-columns" role="row">
+              <span role="columnheader">Name</span>
+              <span className="archive-modified" role="columnheader">Modified</span>
+              <span className="archive-size" role="columnheader">Size</span>
+            </div>
+          </div>
+          {archive.map((item, index) => {
+            const parts = item.path.split(/[\\/]/).filter(Boolean)
+            const name = parts.at(-1) ?? item.path
+            const depth = Math.min(Math.max(parts.length - 1, 0), 8)
+            const modified = displayArchiveDate(item.modified)
+            return <div className="archive-row" role="row" key={`${item.path}-${index}`}>
+              <span className="archive-name" role="cell" aria-label={item.path} title={item.path}>
+                {depth > 0 && <span className="archive-indent" aria-hidden="true" style={{ width: `${depth * 18}px` }} />}
+                <FileTypeIcon entry={{ name, kind: item.kind }} />
+                <span>{name}</span>
+              </span>
+              <span className="archive-modified" role="cell">{modified}</span>
+              <span className="archive-size" role="cell">{item.kind === 'file' ? formatBytes(item.size) : ''}</span>
+            </div>
+          })}
         </div>
       )
       case 'model': return <Suspense fallback={<div className="empty-state"><div className="spinner" />Preparing 3D viewer…</div>}><ModelPreview entry={entry} extension={previewExtension} onError={reportForcedError} /></Suspense>

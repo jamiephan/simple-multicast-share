@@ -2,6 +2,8 @@ import { modelExtensions } from './model'
 import { officeKind } from './office'
 import type { FileEntry } from './types'
 
+export type FileVisualEntry = Pick<FileEntry, 'name' | 'kind' | 'mime'>
+
 export type FileVisualType =
   | 'folder'
   | 'image'
@@ -32,7 +34,7 @@ function extension(name: string) {
   return name.split('.').pop()?.toLowerCase() ?? ''
 }
 
-export function fileVisualType(entry: FileEntry): FileVisualType {
+export function fileVisualType(entry: FileVisualEntry): FileVisualType {
   if (entry.kind === 'directory') return 'folder'
   const suffix = extension(entry.name)
   if (entry.mime?.startsWith('image/')) return 'image'
