@@ -328,7 +328,7 @@ export default function App() {
     >
       {dragging && <div className="drop-overlay"><Upload size={48} /><strong>Drop files to upload</strong><span>Files will be uploaded into {path || 'the root folder'}</span></div>}
       <header className="topbar">
-        <div className="brand"><div className="brand-mark"><FolderInput /></div><div><strong>Simple Share</strong><span>Files available on this device</span></div></div>
+        <div className="brand"><div className="brand-mark"><FolderInput /></div><div><strong>Simple Multicast Share</strong><span>Files available on this device</span></div></div>
         <div className="top-actions">
           <button className="icon-button" title="Inspect SQLite database" aria-label="Open database inspector" onClick={() => setDebugging(true)}>
             <Bug size={19} />
@@ -427,6 +427,14 @@ export default function App() {
             </div>}
         </section>
       </main>
+
+      <footer className="app-footer">
+        <span>Simple Multicast Share by Jamie Phan</span>
+        <span className="footer-links">
+          <a href="https://github.com/jamiephan/simple-multicast-share" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/jamiephan/simple-multicast-share/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+        </span>
+      </footer>
 
       <input ref={uploadInput} className="sr-only" type="file" multiple onChange={(event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) uploadFiles(event.target.files)

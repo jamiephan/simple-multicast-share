@@ -66,6 +66,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .top-actions { display: flex; }
 
 main { max-width: 1368px; margin: 0 auto; padding: 22px 24px 70px; }
+.app-footer { max-width: 1368px; margin: 0 auto; padding: 18px 24px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.footer-links { display: flex; align-items: center; gap: 16px; }
+.app-footer a { color: var(--primary); text-decoration: none; }
+.app-footer a:hover { text-decoration: underline; }
 .breadcrumbs { display: flex; align-items: center; min-height: 32px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
 .breadcrumbs button { border: 0; background: none; display: flex; align-items: center; gap: 7px; color: var(--muted); padding: 5px 7px; border-radius: 6px; cursor: pointer; }
 .breadcrumbs button:hover { background: var(--surface-muted); color: var(--text); }
@@ -299,6 +303,7 @@ dialog::backdrop { background: rgb(13 17 28 / 55%); backdrop-filter: blur(3px); 
   .topbar { padding: 0 15px; }
   .brand span { display: none; }
   main { padding: 15px 14px 80px; }
+  .app-footer { align-items: flex-start; flex-direction: column; padding: 18px 14px 24px; }
   .commandbar { align-items: stretch; flex-direction: column; margin-top: 12px; }
   .create-group .button { flex: 1; padding-inline: 8px; }
   .view-group { width: 100%; flex-wrap: wrap; }
