@@ -243,7 +243,10 @@ mod tests {
         let bytes = archive.finish().unwrap().into_inner();
 
         let listing = list("notes.zip", bytes).unwrap();
-        assert_eq!(listing.entries[0].modified.as_deref(), Some("2026-09-19T14:30:12"));
+        assert_eq!(
+            listing.entries[0].modified.as_deref(),
+            Some("2026-09-19T14:30:12")
+        );
     }
 
     #[test]
