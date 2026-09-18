@@ -2,6 +2,27 @@
 
 **The simple way to share files and notes on your local network.**
 
+<details>
+  <summary>Why??</summary>
+  <p>
+  My local network is an absolute zoo of hardware: a couple of PCs, MacBooks, an iPhone, tablets, and random Pis scattered everywhere. Half of them are legacy devices that refuse to talk to cloud services, and others are completely un-accounted (no Apple/Google logins). Copy-pasting text or flinging a quick file across them was driving me insane—and dumping API tokens onto public pastebins is obviously a huge YIKES.
+  </p>
+  <p>
+  Tired of bloated solutions that demand Docker stacks, npx bloat, or sketchy .msi installers that pollute your filesystem with a gigabyte of junk, I wrote my own thing:
+  </p>
+  <p>
+  A dead-simple, disposable, one-click LAN file/text drop. Think of it as a ultra-dumbed-down local Google Drive with basic inline editing and previewing. No login, no setup wizard (just allow port access on your firewall), and super easy to spin down when you're done.
+  </p>
+  <p>
+  Data persistence? It’s literally just a single SQLite DB. Move the file, move your data.
+  </p>
+  <p>
+  Port forwarding to the open internet? There's literally no auth. May the odds be ever in your favor.
+  </p>
+  <hr />
+</details>
+
+
 Simple Multicast Share is a self-contained LAN file manager designed to work
 without accounts, a separate web server, or runtime setup. Download one binary,
 run it, and open the advertised mDNS address from another device on the same
@@ -133,5 +154,4 @@ in `.github/workflows/ci.yml`.
 
 Pushing a tag such as `v0.1.0` builds and publishes the standalone binary directly
 for Windows x86-64, Linux x86-64, and macOS ARM64 with generated GitHub release
-notes. There are no ZIP or TAR wrappers. The release can also be run manually to
-produce downloadable workflow artifacts without publishing a GitHub release.
+notes.
