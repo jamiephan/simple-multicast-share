@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: simple-multicast-share-linux-x86_64
+          - os: windows-latest
+            asset: simple-multicast-share-windows-x86_64.exe
+          - os: macos-latest
+            asset: simple-multicast-share-macos-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: cargo build --release --locked
+      - name: Stage binary
+        shell: bash
+        run: |
+          mkdir -p dist
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp "./target/release/simple-multicast-share.exe" "dist/${{ matrix.asset }}"
+          else
+            cp "./target/release/simple-multicast-share" "dist/${{ matrix.asset }}"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*

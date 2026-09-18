@@ -1,0 +1,10 @@
+{
+  "name": "simple-multicast-share",
+  "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "test": "pnpm --filter web test"
+  }
+}
