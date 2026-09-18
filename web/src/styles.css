@@ -205,8 +205,10 @@ dialog::backdrop { background: rgb(13 17 28 / 55%); backdrop-filter: blur(3px); 
 .media-preview img, .media-preview video { max-width: 100%; max-height: 65vh; object-fit: contain; }
 .media-preview audio { width: min(600px, 90%); }
 .pdf-preview { width: 100%; min-height: 65vh; border: 0; border-radius: 7px; background: white; }
-.text-editor, .text-editor textarea { display: block; width: 100%; min-height: min(570px, 65vh); }
-.text-editor textarea { resize: vertical; border: 1px solid var(--border); border-radius: 7px; padding: 14px; background: var(--surface); color: var(--text); font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
+.code-editor { position: relative; width: 100%; min-height: min(570px, 65vh); overflow: hidden; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.code-editor .cm-editor { min-height: min(570px, 65vh); font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.code-editor .cm-scroller { min-height: min(570px, 65vh); }
+.code-language { position: absolute; z-index: 2; right: 8px; bottom: 7px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 5px; background: color-mix(in srgb, var(--surface-raised) 88%, transparent); color: var(--muted); font: 10px ui-monospace, monospace; pointer-events: none; }
 .hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px !important; margin: 10px 0 0 !important; }
 .archive-list { border: 1px solid var(--border); border-radius: 7px; overflow: auto; max-height: 65vh; }
 .archive-heading, .archive-row { display: flex; justify-content: space-between; gap: 20px; align-items: center; min-height: 38px; padding: 7px 12px; border-bottom: 1px solid var(--border); font: 12px ui-monospace, monospace; }
@@ -214,6 +216,37 @@ dialog::backdrop { background: rgb(13 17 28 / 55%); backdrop-filter: blur(3px); 
 .archive-row:last-child { border-bottom: 0; }
 .archive-row span:first-child { overflow-wrap: anywhere; }
 .archive-row span:last-child { color: var(--muted); white-space: nowrap; }
+.model-preview { position: relative; min-height: min(570px, 65vh); overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: #20242c; }
+.model-canvas { position: absolute; inset: 48px 0 28px; touch-action: none; }
+.model-canvas canvas { display: block; width: 100%; height: 100%; }
+.model-toolbar { position: absolute; z-index: 2; inset: 0 0 auto; min-height: 48px; display: flex; align-items: center; gap: 7px; padding: 6px 9px; background: rgb(24 28 35 / 88%); color: #e8eaf0; backdrop-filter: blur(8px); }
+.model-toolbar > span { display: flex; align-items: center; gap: 6px; margin-right: auto; font-size: 12px; font-weight: 600; }
+.model-toolbar .button { min-height: 32px; padding: 5px 9px; border-color: #4a5160; background: #292e38; color: #e8eaf0; }
+.model-toolbar .button[aria-pressed="true"] { border-color: #7895f7; background: #303d69; }
+.model-status { position: absolute; z-index: 3; inset: 48px 0 28px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgb(32 36 44 / 88%); color: #e8eaf0; }
+.model-status .spinner { margin: 0; }
+.model-status.error { padding: 30px; color: #ff9a9a; text-align: center; }
+.model-status.error span { width: 22px; height: 22px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; font-weight: 700; }
+.model-help { position: absolute; z-index: 2; inset: auto 0 0; height: 28px; margin: 0 !important; display: grid; place-items: center; background: rgb(24 28 35 / 88%); color: #b7becb; font-size: 11px !important; }
+.office-preview { position: relative; width: 100%; min-height: min(570px, 65vh); overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: #e5e7eb; }
+.office-document { min-height: min(570px, 65vh); }
+.office-preview.word .office-document { padding: 20px; }
+.office-preview.word .docx-wrapper { padding: 20px !important; background: transparent !important; }
+.office-preview.word .docx-wrapper > section.docx { margin: 0 auto 18px !important; box-shadow: 0 4px 18px rgb(0 0 0 / 18%); }
+.office-preview.presentation .office-document { min-width: 720px; }
+.office-status { position: absolute; z-index: 4; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 28px; background: color-mix(in srgb, var(--surface) 94%, transparent); color: var(--muted); text-align: center; }
+.office-status .spinner { margin: 0 0 3px; }
+.office-status.error { color: var(--danger); }
+.office-status.error span { max-width: 600px; line-height: 1.5; }
+.office-kind { position: sticky; z-index: 3; left: 8px; bottom: 8px; width: fit-content; display: flex; align-items: center; gap: 5px; margin: 8px; padding: 4px 7px; border-radius: 5px; background: rgb(24 28 35 / 82%); color: #e8eaf0; font-size: 10px; }
+.sheet-tabs { position: sticky; top: 0; z-index: 3; display: flex; gap: 2px; overflow-x: auto; padding: 6px 7px 0; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+.sheet-tabs button { min-height: 32px; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid transparent; border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); white-space: nowrap; cursor: pointer; }
+.sheet-tabs button[aria-selected="true"] { border-color: var(--border); border-bottom-color: var(--surface); background: var(--surface); color: var(--text); }
+.sheet-view { min-width: max-content; background: white; color: #1f2937; }
+.sheet-view table { border-collapse: collapse; font: 12px Arial, sans-serif; }
+.sheet-view th, .sheet-view td { min-width: 90px; max-width: 300px; height: 28px; padding: 4px 7px; overflow: hidden; border: 1px solid #d1d5db; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-view th { position: sticky; left: 0; min-width: 44px; background: #f3f4f6; color: #6b7280; text-align: right; }
+.office-limit { position: sticky; left: 0; margin: 0 !important; padding: 9px 12px; background: #fff4cf; color: #6b5312; font-size: 12px !important; }
 
 .editor-toolbar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
 .tool { width: 34px; height: 34px; border: 1px solid transparent; background: transparent; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }

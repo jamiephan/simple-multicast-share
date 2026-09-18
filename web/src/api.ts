@@ -240,6 +240,24 @@ export const api = {
       })),
     }
   },
+  modelAssets: async (modelPath: string, signal?: AbortSignal) => {
+    const root = parentPath(modelPath)
+    const assets = new Map<string, string>()
+    const visit = async (directory: string, depth: number) => {
+      if (depth > 8 || assets.size >= 1000) return
+      const listing = await api.list(directory, signal)
+      for (const item of listing.entries) {
+        if (item.kind === 'directory') {
+          await visit(item.path, depth + 1)
+        } else {
+          const relative = root ? item.path.slice(root.length + 1) : item.path
+          assets.set(relative.replaceAll('\\', '/'), api.previewUrl(item.id))
+        }
+      }
+    }
+    await visit(root, 0)
+    return assets
+  },
   debugDatabase: (signal?: AbortSignal) =>
     request<DebugDatabaseInfo>('/api/debug/database', { signal }),
   compactDatabase: () =>

@@ -34,7 +34,14 @@ pub fn list(name: &str, bytes: Vec<u8>) -> ApiResult<ArchiveListing> {
         ));
     }
     let lower = name.to_ascii_lowercase();
-    if lower.ends_with(".zip") {
+    if lower.ends_with(".zip")
+        || [
+            ".docx", ".docm", ".xlsx", ".xlsm", ".xlsb", ".pptx", ".pptm", ".ppsx", ".ppsm",
+            ".potx", ".potm", ".ods",
+        ]
+        .iter()
+        .any(|extension| lower.ends_with(extension))
+    {
         list_zip(bytes)
     } else if lower.ends_with(".tar.gz") || lower.ends_with(".tgz") {
         let compressed_len = bytes.len() as u64;

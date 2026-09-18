@@ -121,6 +121,7 @@ export default function App() {
     .sort((a, b) => Number(b.kind === 'directory') - Number(a.kind === 'directory') || a.name.localeCompare(b.name, undefined, { numeric: true })),
   [entries, query])
   const crumbs = useMemo(() => path.split('/').filter(Boolean), [path])
+  const darkTheme = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
 
   const runAction = async (action: () => Promise<void>, success: string) => {
     setBusy(true)
@@ -394,7 +395,7 @@ export default function App() {
           <button className="button danger" onClick={() => void conflict.overwrite()}>Replace</button>
         </>
       }><p>“{conflict.name}” already exists in this folder. Replace it, or keep both files by choosing a new name.</p></Modal>}
-      {preview && <Preview entry={preview} onClose={() => setPreview(null)} onChanged={() => void load()} onSaveImage={saveEditedImage} />}
+      {preview && <Preview entry={preview} dark={darkTheme} onClose={() => setPreview(null)} onChanged={() => void load()} onSaveImage={saveEditedImage} />}
       {debugging && <DatabaseInspector onClose={() => setDebugging(false)} onChanged={() => void load()} />}
       {busy && <div className="busy" role="status"><div className="spinner" />Working…</div>}
     </div>

@@ -32,5 +32,8 @@ tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
 
 [profile.release]
-lto = "thin"
-strip = true
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

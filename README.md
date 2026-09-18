@@ -58,17 +58,32 @@ address instead. No application configuration is required.
 
 ## Features
 
-- Create and edit notes or source/configuration text directly in the browser
+- Create and edit notes or source/configuration text in a CodeMirror editor with automatic syntax highlighting
 - Upload by picker or drag-and-drop, replace, rename, move, download, and recursively delete
 - Browse for a move destination, including nested folders, parents, and the root
 - Create folders and organize shared files
 - Grid/list views and system/light/dark themes persisted in SQLite
-- Browser previews for images, PDF, audio, and video with byte-range support
+- Browser previews for images, PDF, audio, video, and STL/OBJ/FBX/glTF/GLB 3D models
+- Local Office previews for DOCX/DOCM, XLSX/XLSM/XLSB/XLS/ODS, and PPTX/PPTM/PPSX/PPSM/POTX/POTM
 - UTF-8 source/config editing with optimistic revision checks
 - Image crop and freehand, arrow, rectangle, and text annotations
 - Read-only ZIP, TAR, TAR.GZ, TGZ, and GZ inspection with entry, size, and expansion guards
 - mDNS advertisement as `<hostname>.local` and `_http._tcp.local`
 - Debug database inspector for browsing schemas/rows and updating typed cells
+
+The interactive 3D viewer provides orbit, pan, zoom, reset, grid, wireframe, and
+animation playback. Self-contained STL, OBJ, FBX, glTF, and GLB files work
+directly. Referenced OBJ material libraries, textures, and glTF buffers are
+resolved from files and subfolders beside the model in the virtual file manager;
+external internet resources are intentionally not fetched.
+
+Office previews are rendered locally in the browser; document contents are never
+sent to a cloud viewer. Legacy binary `.doc` and `.ppt` files require a native
+conversion engine and therefore show download/save-as-modern-format guidance.
+Spreadsheet previews cap rendered DOM output at 500 rows by 100 columns per sheet
+to keep the interface responsive while preserving the original file in storage.
+Modern zipped Office files also pass the server's archive entry, expanded-size,
+and compression-ratio guards before rendering.
 
 ## Build
 
@@ -85,7 +100,9 @@ cargo build --release
 
 The web build must run before Cargo so `web\dist` is embedded. The resulting
 `target\release\simple-multicast-share.exe` needs no web assets or Node.js at
-runtime.
+runtime. The release profile favors a small distributable binary with size
+optimization, full link-time optimization, a single codegen unit, stripped
+symbols, and abort-on-panic behavior.
 
 For development:
 
