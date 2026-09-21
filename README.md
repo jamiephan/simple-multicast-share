@@ -200,8 +200,10 @@ Rust formatting, tests, Clippy, and a locked release build. The workflow is defi
 in `.github/workflows/ci.yml`.
 
 Pushing a tag such as `v0.1.0` builds and publishes the standalone binary directly
-for Windows x86-64, Linux x86-64, and macOS ARM64 with generated GitHub release
-notes.
+for Windows x86-64 and ARM64, Linux x86-64 and ARM64, and macOS x86-64 and ARM64
+with generated GitHub release notes. There are no ZIP or TAR wrappers. The release
+can also be run manually to produce downloadable workflow artifacts without
+publishing a GitHub release.
 
 ---
 
