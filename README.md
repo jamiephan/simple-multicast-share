@@ -75,7 +75,9 @@ files, organize them into folders, or create and edit notes directly in the brow
 `simple-multicast-share.db` file contains all durable application data.
 
 If a device does not support `.local` mDNS names, open the host computer's LAN IP
-address instead. No application configuration is required.
+address instead. At startup, the server prints a ready-to-use URL for every active
+local network address, for example `http://192.168.1.25:7777`. No application
+configuration is required.
 
 ## Features
 
@@ -156,7 +158,7 @@ simple-multicast-share [--port <PORT>] [--mdns|--no-mdns]
 
 The HTTP listener always binds to `0.0.0.0`. With the defaults, open
 `http://<hostname>.local:7777` from another device when local mDNS is supported,
-or use the host's LAN IP address.
+or use one of the local IP address URLs printed when the server starts.
 
 ## Storage and limits
 

@@ -14,6 +14,7 @@ futures-util = "0.3"
 hostname = "0.4"
 http = "1"
 http-body-util = "0.1"
+if-addrs = "0.14"
 mdns-sd = "0.13"
 mime_guess = "2"
 rusqlite = { version = "0.32", features = ["blob", "bundled"] }

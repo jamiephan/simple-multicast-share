@@ -1,4 +1,7 @@
-use std::{net::SocketAddr, path::PathBuf};
+use std::{
+    net::{IpAddr, Ipv6Addr, SocketAddr},
+    path::PathBuf,
+};
 
 use clap::{ArgAction, Parser};
 use mdns_sd::{ServiceDaemon, ServiceInfo};
@@ -65,6 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None
     };
     info!("listening on {address}; database {}", db_path.display());
+    log_access_urls(address.port());
     axum::serve(
         listener,
         app(state).into_make_service_with_connect_info::<SocketAddr>(),
@@ -76,6 +80,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = daemon.shutdown();
     }
     Ok(())
+}
+
+fn log_access_urls(port: u16) {
+    match local_ip_addresses() {
+        Ok(addresses) if addresses.is_empty() => {
+            tracing::warn!(
+                "no local network addresses were found; mDNS or localhost may still work"
+            );
+        }
+        Ok(addresses) => {
+            info!("local network access:");
+            for ip in addresses {
+                info!("  http://{}", SocketAddr::new(ip, port));
+            }
+        }
+        Err(error) => {
+            tracing::warn!("could not enumerate local network addresses: {error}");
+        }
+    }
+}
+
+fn local_ip_addresses() -> std::io::Result<Vec<IpAddr>> {
+    let mut addresses = if_addrs::get_if_addrs()?
+        .into_iter()
+        .map(|interface| interface.ip())
+        .filter(|address| is_connectable_address(*address))
+        .collect::<Vec<_>>();
+    addresses.sort_unstable();
+    addresses.dedup();
+    Ok(addresses)
+}
+
+fn is_connectable_address(address: IpAddr) -> bool {
+    if address.is_loopback() || address.is_unspecified() || address.is_multicast() {
+        return false;
+    }
+    match address {
+        IpAddr::V4(_) => true,
+        IpAddr::V6(address) => !is_ipv6_link_local(address),
+    }
+}
+
+fn is_ipv6_link_local(address: Ipv6Addr) -> bool {
+    (address.segments()[0] & 0xffc0) == 0xfe80
 }
 
 fn advertise(
@@ -146,7 +194,9 @@ async fn shutdown_signal() {
 mod tests {
     use clap::Parser;
 
-    use super::{normalize_hostname, Cli};
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+
+    use super::{is_connectable_address, normalize_hostname, Cli};
 
     #[test]
     fn default_port_is_7777() {
@@ -158,5 +208,32 @@ mod tests {
     fn hostname_is_dns_safe() {
         assert_eq!(normalize_hostname("My Laptop.local"), "my-laptop");
         assert_eq!(normalize_hostname("..."), "simple-multicast-share");
+    }
+
+    #[test]
+    fn access_addresses_exclude_unusable_interfaces() {
+        assert!(!is_connectable_address(IpAddr::V4(Ipv4Addr::LOCALHOST)));
+        assert!(!is_connectable_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED)));
+        assert!(!is_connectable_address(IpAddr::V6(Ipv6Addr::LOCALHOST)));
+        assert!(!is_connectable_address(IpAddr::V6(
+            "fe80::1".parse().unwrap()
+        )));
+        assert!(is_connectable_address(IpAddr::V4(
+            "192.168.1.25".parse().unwrap()
+        )));
+        assert!(is_connectable_address(IpAddr::V6(
+            "2001:db8::25".parse().unwrap()
+        )));
+    }
+
+    #[test]
+    fn ipv6_access_urls_are_bracketed() {
+        assert_eq!(
+            format!(
+                "http://{}",
+                SocketAddr::new("2001:db8::25".parse().unwrap(), 7777)
+            ),
+            "http://[2001:db8::25]:7777"
+        );
     }
 }
